@@ -1,11 +1,14 @@
 import sqlite3
+import os
 from flask import Flask, request, redirect, render_template_string
 
 app = Flask(__name__)
 
-# Configuración de la Base de Datos Gratuita (SQLite)
+# Usamos la carpeta /tmp porque Render sí permite escribir archivos ahí gratis
+DB_PATH = '/tmp/barberia.db'
+
 def init_db():
-    conn = sqlite3.connect('barberia.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS citas (
@@ -19,7 +22,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Diseño Visual Moderno (HTML + CSS Bootstrap 5) en un solo bloque
 PLANTILLA_WEB = '''
 <!DOCTYPE html>
 <html lang="es">
@@ -44,7 +46,6 @@ PLANTILLA_WEB = '''
         </header>
 
         <div class="row g-4">
-            <!-- Formulario de Reserva para el Cliente -->
             <div class="col-md-6">
                 <div class="card p-4 shadow">
                     <h3 class="mb-4 text-warning">Reserva tu Turno</h3>
@@ -72,7 +73,6 @@ PLANTILLA_WEB = '''
                 </div>
             </div>
 
-            <!-- Panel del Barbero para ver las Citas -->
             <div class="col-md-6">
                 <div class="card p-4 shadow">
                     <h3 class="mb-4 text-warning">📅 Agenda de Hoy (Panel Barbero)</h3>
@@ -110,7 +110,8 @@ PLANTILLA_WEB = '''
 
 @app.route('/')
 def home():
-    conn = sqlite3.connect('barberia.db')
+    init_db()
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM citas ORDER BY fecha ASC, hora ASC')
     todas_citas = cursor.fetchall()
@@ -124,7 +125,7 @@ def reservar():
     fecha = request.form['fecha']
     hora = request.form['hora']
     
-    conn = sqlite3.connect('barberia.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('INSERT INTO citas (nombre, telefono, fecha, hora) VALUES (?, ?, ?, ?)', 
                    (nombre, telefono, fecha, hora))
@@ -134,5 +135,4 @@ def reservar():
 
 if __name__ == '__main__':
     init_db()
-    # Cambiado a puerto 8080 para evitar conflictos comunes en Mac/Windows
     app.run(debug=True, port=8080)
